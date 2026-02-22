@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: kku_library
+      POSTGRES_USER: kku
+      POSTGRES_PASSWORD: kku_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kku -d kku_library"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  flyway:
+    image: flyway/flyway:10-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    command: -connectRetries=60 migrate
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db:5432/kku_library
+      FLYWAY_USER: kku
+      FLYWAY_PASSWORD: kku_password
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+    volumes:
+      - ./flyway/sql:/flyway/sql:ro
+
+  api:
+    build: .
+    depends_on:
+      flyway:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 3001
+      NODE_ENV: development
+      JWT_SECRET: dev_only_change_me
+      JWT_EXPIRES_IN: 1h
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: kku_library
+      DB_USER: kku
+      DB_PASSWORD: kku_password
+    ports:
+      - "${HOST_PORT:-3001}:3001"
+    restart: unless-stopped
+
+volumes:
+  db_data:
