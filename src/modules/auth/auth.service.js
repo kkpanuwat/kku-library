@@ -54,7 +54,7 @@ async function login(input) {
   });
 
   const { passwordHash: _pw, ...user } = userWithAuth;
-  return { accessToken: token, tokenType: "Bearer", user };
+  return { accessToken: token, tokenType: "Bearer", user, test: "test" };
 }
 
 const authService = { register, login };
