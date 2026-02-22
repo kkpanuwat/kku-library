@@ -44,8 +44,8 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /opt/kcode-deploy
-            docker compose pull
-            docker compose up -d db
-            docker compose up flyway
-            docker compose up -d --force-recreate kku-library-api
-
+            COMPOSE="docker compose -f docker-compose.yml -f kku-library-api.compose.yml --env-file kku-library-api.env"
+            $COMPOSE pull
+            $COMPOSE up -d kku-library-db
+            $COMPOSE up kku-library-flyway
+            $COMPOSE up -d --force-recreate kku-library-api
